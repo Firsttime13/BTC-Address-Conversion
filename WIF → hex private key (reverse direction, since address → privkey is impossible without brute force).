@@ -1,0 +1,31 @@
+import hashlib
+
+def base58_decode(s):
+    # (same as above, copy from Script 1)
+    alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+    n = 0
+    for char in s:
+        n = n * 58 + alphabet.index(char)
+    byte_length = (n.bit_length() + 7) // 8
+    bytes_result = n.to_bytes(byte_length, 'big')
+    leading_zeros = len(s) - len(s.lstrip(alphabet[0]))
+    return b'\x00' * leading_zeros + bytes_result
+
+def wif_to_hex(wif_str):
+    decoded = base58_decode(wif_str)
+    if len(decoded) not in (37, 38):
+        raise ValueError("Invalid WIF length (expected 37 or 38 bytes)")
+    if decoded[0] != 0x80:
+        raise ValueError("Not mainnet private key WIF")
+    privkey_bytes = decoded[1:33]
+    compressed = (len(decoded) == 38 and decoded[33] == 0x01)
+    payload = decoded[:-4]
+    h1 = hashlib.sha256(payload).digest()
+    h2 = hashlib.sha256(h1).digest()
+    if decoded[-4:] != h2[:4]:
+        raise ValueError("Invalid checksum in WIF")
+    return privkey_bytes.hex().upper(), compressed
+
+# Usage example (use your own WIF offline!):
+# hex_key, comp = wif_to_hex("KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU74sHUHy8S")
+# print(f"Hex: {hex_key}, Compressed: {comp}")
