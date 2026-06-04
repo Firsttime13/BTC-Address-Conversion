@@ -1,0 +1,33 @@
+import hashlib
+
+def base58_decode(s):
+    alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+    n = 0
+    for char in s:
+        n = n * 58 + alphabet.index(char)
+    byte_length = (n.bit_length() + 7) // 8
+    bytes_result = n.to_bytes(byte_length, 'big')
+    leading_zeros = len(s) - len(s.lstrip(alphabet[0]))
+    return b'\x00' * leading_zeros + bytes_result
+
+def validate_address_checksum(address):
+    try:
+        decoded = base58_decode(address)
+        if len(decoded) != 25:
+            return False, f"Invalid length ({len(decoded)} bytes, expected 25 for P2PKH)"
+        payload, checksum = decoded[:-4], decoded[-4:]
+        hash1 = hashlib.sha256(payload).digest()
+        hash2 = hashlib.sha256(hash1).digest()
+        computed = hash2[:4]
+        if checksum == computed:
+            return True, "Checksum valid"
+        return False, "Checksum invalid"
+    except ValueError:
+        return False, "Invalid Base58 characters"
+    except Exception as e:
+        return False, f"Error: {str(e)}"
+
+# Example: test one from your CSV
+addr = "1PWo3JeB9jrGwfHDNpdGK54CRas7fsVzXU"  # Puzzle 71
+valid, msg = validate_address_checksum(addr)
+print(f"{addr}: {msg}" if valid else f"{addr}: {msg}")
