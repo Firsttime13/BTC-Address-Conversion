@@ -1,0 +1,30 @@
+import hashlib
+
+def base58_encode(bytestr):
+    alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+    n = int.from_bytes(bytestr, 'big')
+    result = []
+    while n > 0:
+        n, r = divmod(n, 58)
+        result.append(alphabet[r])
+    result = ''.join(reversed(result))
+    leading_zeros = len(bytestr) - len(bytestr.lstrip(b'\x00'))
+    return alphabet[0] * leading_zeros + result
+
+def hex_to_wif(hex_priv, compressed=True):
+    priv_bytes = bytes.fromhex(hex_priv)
+    if len(priv_bytes) != 32:
+        raise ValueError("Private key must be 32 bytes (64 hex chars)")
+    prefix = b'\x80'
+    extended = prefix + priv_bytes
+    if compressed:
+        extended += b'\x01'
+    h1 = hashlib.sha256(extended).digest()
+    h2 = hashlib.sha256(h1).digest()
+    checksum = h2[:4]
+    final = extended + checksum
+    return base58_encode(final)
+
+# Example (dummy key):
+# wif = hex_to_wif("0000000000000000000000000000000000000000000000000000000000000001")
+# print(f"WIF compressed: {wif}")
