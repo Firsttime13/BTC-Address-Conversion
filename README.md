@@ -18,3 +18,9 @@ Bash
 python3 btc_address_checksum.py   # or whichever script
 
 (Use python3 -m venv venv && source venv/bin/activate for isolation.)
+
+
+sudo apt update && sudo apt install python3 git -y
+git clone https://github.com/Firsttime13.git  # or your repo name/path
+cd Firsttime13
+python3 btc_address_checksum.py   # or whichever script
